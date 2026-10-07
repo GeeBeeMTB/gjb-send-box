@@ -1,0 +1,74 @@
+:root {
+  --ground: #ffffff;
+  --ink: #1b2430;
+  --muted: #56616d;
+  --line: #b9c2cc;
+  --accent: #1f5fbf;
+  --accent-ink: #ffffff;
+  --warn-ground: #fff4d6;
+  --warn-line: #d9a514;
+  --off-ground: #dde3e9;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #1c2128;
+    --ink: #eef1f4;
+    --muted: #aab4bf;
+    --line: #55606c;
+    --accent: #7fb0f5;
+    --accent-ink: #10151b;
+    --warn-ground: #3b3012;
+    --warn-line: #d9a514;
+    --off-ground: #333b45;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+}
+main { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.eyebrow { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+.banner {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px; border-radius: 6px;
+  background: var(--warn-ground); border: 1px solid var(--warn-line);
+}
+.banner[hidden] { display: none; }
+.field-label, legend { font-weight: 600; font-size: 14px; padding: 0; margin: 0 0 6px; }
+select {
+  font: inherit; color: var(--ink); background: var(--ground);
+  width: 100%; min-height: 44px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 6px;
+}
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+fieldset[hidden] { display: none; }
+.pills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pills[hidden] { display: none; }
+.pills.small { display: flex; }
+.pills button {
+  font: inherit; font-weight: 600; min-height: 44px; min-width: 44px; padding: 0 8px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--ground); color: var(--ink); cursor: pointer;
+}
+.pills button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pills button:focus-visible, select:focus-visible, .primary:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chase { display: flex; flex-direction: column; gap: 8px; }
+.check { display: flex; align-items: center; gap: 10px; font-weight: 600; min-height: 44px; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.interval { display: flex; align-items: center; gap: 8px; color: var(--muted); flex-wrap: wrap; }
+.interval[hidden] { display: none; }
+.hint, .summary, .status { margin: 0; color: var(--muted); font-size: 13px; }
+.hint[hidden] { display: none; }
+.summary { white-space: pre-line; }
+.primary {
+  font: inherit; font-size: 15px; font-weight: 600; min-height: 48px;
+  border: 0; border-radius: 6px; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink);
+}
+.primary:disabled { background: var(--off-ground); color: var(--muted); cursor: default; }
+@media (min-width: 360px) { .pills { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

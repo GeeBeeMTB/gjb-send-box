@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GJB send box</title>
+<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<link rel="stylesheet" href="taskpane.css?v=1.0.0.0">
+</head>
+<body>
+<main>
+  <p class="eyebrow">GJB send box</p>
+
+  <div id="note-banner" class="banner" hidden>
+    <strong>Your internal note is still in this email.</strong>
+    <span>The "DELETE BEFORE SENDING" block has not been removed. Delete it in the email, or send with it left in.</span>
+  </div>
+
+  <label class="field-label" for="job">Job</label>
+  <select id="job"></select>
+
+  <fieldset id="time-group">
+    <legend>Time on this matter</legend>
+    <div class="pills" id="times"></div>
+    <p class="hint" id="fixed-fee-hint" hidden>Fixed fee job: no time is logged.</p>
+  </fieldset>
+
+  <div class="chase">
+    <label class="check">
+      <input type="checkbox" id="chase">
+      <span>Chase this if there is no reply</span>
+    </label>
+    <div class="interval" id="interval-row" hidden>
+      <span>Every</span>
+      <div class="pills small" id="intervals"></div>
+      <span>working days</span>
+    </div>
+  </div>
+
+  <p id="summary" class="summary" aria-live="polite">Pick a time to send.</p>
+  <button type="button" id="send" class="primary" disabled>Send email</button>
+  <p id="status" class="status" aria-live="polite"></p>
+</main>
+<script src="jobs.js?v=1.0.0.0"></script>
+<script src="taskpane.js?v=1.0.0.0"></script>
+</body>
+</html>
