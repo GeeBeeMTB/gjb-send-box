@@ -1,7 +1,7 @@
 /*
  * GJB send box — the side panel.
  * Pick the job and the time, optionally set a chase, then send.
- * The choice is stamped on the email as categories so the filing task can act on it.
+ * The choice is saved on the email (the add-in's own properties) so the system can act on it.
  */
 (function () {
   var NOTE_MARK = "DELETE BEFORE SENDING";
@@ -124,45 +124,50 @@
     });
   }
 
-  function stamps() {
-    if (state.job === "none") { return []; }
+  /* What was chosen, as it is stored on the email. */
+  function stamp() {
+    if (state.job === "none") { return { job: "none" }; }
     var job = jobByNumber(state.job);
-    var list = ["GJB job " + state.job];
-    if (!(job && job.fixedFee)) { list.push("GJB time " + state.minutes); }
-    if (state.chase) { list.push("GJB chase every " + state.interval); }
-    return list;
+    var out = { job: state.job };
+    if (!(job && job.fixedFee)) { out.minutes = state.minutes; }
+    if (state.chase) { out.chaseEvery = state.interval; }
+    return out;
   }
 
-  /* A category has to exist in the mailbox's master list before it can be put on an email. */
-  function ensureCategories(names) {
-    var mailbox = Office.context.mailbox;
-    return call(function (cb) { mailbox.masterCategories.getAsync(cb); }).then(function (existing) {
-      var have = (existing || []).map(function (c) { return c.displayName; });
-      var missing = names.filter(function (n) { return have.indexOf(n) < 0; }).map(function (n) {
-        return { displayName: n, color: Office.MailboxEnums.CategoryColor.Preset7 };
-      });
-      if (missing.length === 0) { return null; }
-      return call(function (cb) { mailbox.masterCategories.addAsync(missing, cb); });
+  /* The choice is saved on the email as the add-in's own properties. They stay on Glyn's copy
+     (and so on the Sent Items copy) and are not sent to the people the email goes to.
+     Categories cannot be used: new Outlook does not let an add-in set them on an email being written. */
+  function saveStamp(item, data) {
+    return call(function (cb) { item.loadCustomPropertiesAsync(cb); }).then(function (props) {
+      props.set("gjbJob", String(data.job));
+      props.set("gjbMinutes", data.minutes === undefined ? "" : String(data.minutes));
+      props.set("gjbChaseEvery", data.chaseEvery === undefined ? "" : String(data.chaseEvery));
+      props.set("gjbStamped", new Date().toISOString());
+      return call(function (cb) { props.saveAsync(cb); });
+    });
+  }
+
+  function withTimeout(promise, ms, what) {
+    return new Promise(function (resolve, reject) {
+      var t = setTimeout(function () { reject(new Error(what + " took too long")); }, ms);
+      promise.then(function (v) { clearTimeout(t); resolve(v); }, function (e) { clearTimeout(t); reject(e); });
     });
   }
 
   function send() {
     if (state.sending) { return; }
     var item = Office.context.mailbox.item;
-    var names = stamps();
     state.sending = true;
-    $("status").textContent = "Sending…";
+    $("status").textContent = "Sending\u2026";
     render();
 
-    var stamped = names.length === 0 ? Promise.resolve() : ensureCategories(names).then(function () {
-      return call(function (cb) { item.categories.addAsync(names, cb); });
-    });
-
-    stamped.then(function () {
-      return call(function (cb) { item.sessionData.setAsync("gjbDone", "1", cb); });
+    withTimeout(saveStamp(item, stamp()), 8000, "Saving the time").then(function () {
+      return withTimeout(call(function (cb) { item.sessionData.setAsync("gjbDone", "1", cb); }), 5000, "Marking the email");
     }).then(function () {
       if (typeof item.sendAsync !== "function") {
+        state.sending = false;
         $("status").textContent = "Saved. Now press Send in the email.";
+        render();
         return null;
       }
       return call(function (cb) { item.sendAsync(cb); });
