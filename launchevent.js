@@ -66,8 +66,21 @@ function gjbGet(fn, fallback) {
   });
 }
 
+/* TEMPORARY diagnostics (remove once Send works): shows where the handler has got to
+   as a note on the email itself, because nothing else is visible from outside. */
+var GJB_DEBUG = true;
+function gjbNote(item, text) {
+  if (!GJB_DEBUG) { return; }
+  try {
+    item.notificationMessages.replaceAsync("gjbdbg", {
+      type: "informationalMessage", message: ("GJB 1.0.2.0 " + text).slice(0, 150), icon: "Icon.16x16", persistent: false
+    }, function () {});
+  } catch (e) { /* diagnostics must never break Send */ }
+}
+
 function onMessageSendHandler(event) {
   var item = Office.context.mailbox.item;
+  gjbNote(item, "started");
   Promise.all([
     gjbGet(function (cb) { item.sessionData.getAsync("gjbDone", cb); }, ""),
     gjbGet(function (cb) { item.subject.getAsync(cb); }, ""),
@@ -77,6 +90,11 @@ function onMessageSendHandler(event) {
   ]).then(function (v) {
     var done = v[0] === "1";
     var subject = v[1];
+    gjbNote(item, "read ok: subject=" + (subject ? "yes" : "no") + " body=" + (v[2] ? "yes" : "no") + " to=" + (v[3] || []).length + " cc=" + (v[4] || []).length);
+    // TEMPORARY: cut-down alerts to find which option new Outlook objects to.
+    if (/\bt1\b/i.test(subject)) { event.completed({ allowEvent: false, errorMessage: "t1: message only" }); return; }
+    if (/\bt2\b/i.test(subject)) { event.completed({ allowEvent: false, errorMessage: "t2: message and Log time button", cancelLabel: "Log time", commandId: GJB_PANE_BUTTON_ID }); return; }
+    if (/\bt3\b/i.test(subject)) { event.completed({ allowEvent: false, errorMessage: "t3: as t2 plus context", cancelLabel: "Log time", commandId: GJB_PANE_BUTTON_ID, contextData: JSON.stringify({ job: "110", note: false }) }); return; }
     var noteStill = gjbOwnText(v[2]).indexOf(GJB_NOTE_MARK) >= 0;
     var recipients = (v[3] || []).concat(v[4] || []);
 
